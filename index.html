@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>PWAウェブプッシュテスト</title>
+
+	<link rel="manifest" href="/manifest.json">
+	<script>
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/sw.js').then(function() {
+				console.log('Service worker registered!');
+			});
+		}
+	</script>
+
+
+	<script src="https://www.gstatic.com/firebasejs/8.2.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.2.1/firebase-messaging.js"></script>
+	<script>
+		// ----- ↓　ここを書き換え -----
+		const firebaseConfig = {
+			apiKey: "○○○○○○○○○○○○○○○○○○○○○○○",
+			authDomain: "○○○○○○○○○○○.firebaseapp.com",
+			projectId: "○○○○○○○○○○○",
+			storageBucket: "○○○○○○○○○○○.appspot.com",
+			messagingSenderId: "○○○○○○○○○○○",
+			appId: "○:○○○○○○○○○○○:web:○○○○○○○○○○○○○○○○○"
+		};
+		// ----- ↑ ここまで書き換え -----
+
+		const publicVapidKey = "<ウェブプッシュ証明書鍵ペア>";
+
+		const app = firebase.initializeApp(firebaseConfig);
+
+		const messaging = firebase.messaging(app);
+
+		/**
+		 * 権限要求
+		 */
+		function requestPermission() {
+			Notification.requestPermission().then((permission) => {
+				switch (permission) {
+					case 'granted': // 許可
+						messaging.getToken({ vapidKey: publicVapidKey }).then((token) => {
+							if (token) {
+								console.log( "token", token );
+								alert( "token => " + token );
+							} else {
+								console.log('登録トークンがありません。生成する許可をリクエストします。');
+							}
+						}).catch((err) => {
+							console.error('トークンの取得に失敗しました。', err);
+							alert("トークンの取得に失敗");
+						});
+						break;
+					case 'denied': // ブロック
+					case 'default': // ブロックも許可もなし（xで閉じた）
+					default:
+						console.error('ブロックまたはxで閉じました。');
+						break;
+				}
+			});
+		}
+
+		/**
+		 * トークン削除
+		 */
+		function deleteToken() {
+			messaging.getToken().then((token) => {
+				messaging.deleteToken(token).then(function() {
+					console.log('トークンを削除しました');
+				}).catch(function(err) {
+					console.error('トークンの削除に失敗しました', err);
+				});
+			}).catch(function(err) {
+				console.error('トークンの取得に失敗しました。', err);
+			});
+		}
+	</script>
+
+	<style>
+		button {
+			display: block;
+			width: 80vw;
+			height: 90vh;
+			margin: 0 auto;
+		}
+	</style>
+</head>
+<body>
+
+	<button type="button" onclick="requestPermission();">プッシュ通知許可</button>
+
+</body>
+</html>
